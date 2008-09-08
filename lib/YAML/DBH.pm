@@ -1,32 +1,49 @@
 package YAML::DBH;
 use strict;
 use Exporter;
+use YAML;
 use vars qw(@EXPORT_OK %EXPORT_TAGS @ISA $VERSION);
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(yaml_dbh);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.2 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)/g;
 
 #use Smart::Comments '###';
 
 
 sub yaml_dbh {
-   my $abs = shift;
-   require DBI;
-   require YAML;
-   my $c = YAML::LoadFile($abs) or die;
+   my $arg = shift;
+   $arg or die('yaml_dbh() missing argument');
+   
 
+
+
+   # 1) figure out conf 
+
+   my $c; # conf ref
+
+   if ( ref $arg ){ # assume a conf ref was passed (hash or array, could be both?      
+      $c = $arg;
+   }
+
+   else { # assume path
+      $c = YAML::LoadFile($arg) or die("cant YAML load $arg");      
+   }
+
+
+     
+   # 2) scan conf ref for arguments
 
    my $username = _findkey( $c => qw(username uname user dbuser dbusername) )
-      or die("missing username in $abs");
+      or die("missing username in $arg");
       
    my $hostname = _findkey( $c => qw(hostname host dbhost dbhostname) ) || 'localhost';
 
    my $password = _findkey( $c => qw(password dbpass dbpassword passw dbpassw pass))
-      or die("missing password in $abs");
+      or die("missing password in $arg");
    
    my $database = _findkey( $c => qw(database dbname databasename))
-      or die("missing database name in $abs");
+      or die("missing database name in $arg");
    my $dbdriver = _findkey( $c => qw(dbdriver driver db_driver) ) || 'mysql';
 
 
@@ -38,6 +55,10 @@ sub yaml_dbh {
    ### $password
    ### $dbdriver
    ### $dbsource
+
+
+   # 3) open handle
+   require DBI;
 
    my $dbh = DBI->connect(
       $dbsource, 
@@ -51,6 +72,8 @@ sub yaml_dbh {
 
 
 
+
+# pass it the conf hash ref, and a list of possible case insensitive key matches
 sub _findkey {
    my $_hashref = shift;
 
@@ -85,6 +108,16 @@ YAML::DBH
 
    my $dbh = yaml_dbh( '/home/myself/mysql_credentials.conf' );
 
+
+=head2 EXAMPLE 2
+
+   use YAML::DBH;
+
+   my $conf = YAML::LoadFile('./file.conf');
+
+   my $dbh  = YAML::DBH::yml_dbh($conf);
+
+
 =head1 DESCRIPTION
 
 Point and shoot method of getting a mysql database handle with only a yaml 
@@ -99,8 +132,11 @@ Are not exported by default.
 
 =head2 yaml_dbh()
 
-Argument is abs path to yaml config file. 
+Argument is abs path to yaml config file.
 Returns DBI mysql dbh handle.
+
+Optionally you may pass it a conf hashref as returned by YAML::LoadFile instead, to 
+scan it for the parameters to open a mysql connect with, and return a database handle.
 
 
 =head1 THE YAML CONFIG FILE

@@ -1,0 +1,21 @@
+2008-09-08 09:37  cvs
+
+	* lib/YAML/DBH.pm, t/02_open_from_confhash.t: Added capacity for
+	  yaml_dbh() to take a conf hashref to scan, instead of just a path
+	  to a conf file.
+
+	  So that, if you already have a conf opened, you can pass that
+	  instead to yaml_dbh() to get your dbh.
+
+2008-08-26 09:36  cvs
+
+	* MANIFEST, Makefile.PL, README, lib/YAML/DBH.pm, t/00.t,
+	  t/01_find_confs_and_test.pl, t/dbh_yaml.conf, t/dbh_yaml2.conf,
+	  t/dbh_yaml3.conf: Initial revision
+
+2008-08-26 09:36  cvs
+
+	* MANIFEST, Makefile.PL, README, lib/YAML/DBH.pm, t/00.t,
+	  t/01_find_confs_and_test.pl, t/dbh_yaml.conf, t/dbh_yaml2.conf,
+	  t/dbh_yaml3.conf: init
+
