@@ -1,15 +1,14 @@
 package YAML::DBH;
 use strict;
 use Exporter;
+use DBI;
+use DBD::mysql;
 use YAML;
 use vars qw(@EXPORT_OK %EXPORT_TAGS @ISA $VERSION);
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(yaml_dbh);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.3 $ =~ /(\d+)/g;
-
-#use Smart::Comments '###';
-
+$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)/g;
 
 sub yaml_dbh {
    my $arg = shift;
@@ -58,7 +57,6 @@ sub yaml_dbh {
 
 
    # 3) open handle
-   require DBI;
 
    my $dbh = DBI->connect(
       $dbsource, 
@@ -178,6 +176,10 @@ Also acceptable:
    username: jack
    password: aweg3hmva
    database: akira
+
+=head1 CAVEATS
+
+Tests will fail unless you have mysqld running, see README.
 
 =head1 SEE ALSO
 

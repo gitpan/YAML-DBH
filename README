@@ -11,7 +11,10 @@ INSTALLATION
 TESTING
 
 For real testing you will need to have a running mysqld server.
-You need to be able to make a connection to a database with these parameters:
+
+You need to be able to make a connection to a database as per 
+
+./t/mysql_credentials.conf
 
    username: testing
    database: testing
