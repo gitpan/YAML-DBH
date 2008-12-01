@@ -3,61 +3,62 @@ use strict;
 use Exporter;
 use DBI;
 use DBD::mysql;
+use Carp;
 use YAML;
-use vars qw(@EXPORT_OK %EXPORT_TAGS @ISA $VERSION);
+use vars qw(@EXPORT_OK %EXPORT_TAGS @ISA $VERSION @errstr);
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(yaml_dbh);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.6 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)/g;
+
+
 
 sub yaml_dbh {
-   my $arg = shift;
-   $arg or die('yaml_dbh() missing argument');
    
+   # 0) MAIN VARIABLES OF INTEREST
+
+   # 0.a) the argument
+   my $arg = $_[0] or croak('yaml_dbh() missing path to yaml file argument');
+
+   # 0.b) the main arguments to open a connect via DBI are dbsource, username, and password
+   my ( $dbsource, $username, $password );
+
+   # 0.c) what we explore inside is the conf data hashref
+   my $conf;
 
 
 
-   # 1) figure out conf 
 
-   my $c; # conf ref
+   # 1) RESOLVE THE CONF HASHREF ITSELF
+   # figure out conf data, if conf was passed as a hashref or a path string
 
-   if ( ref $arg ){ # assume a conf ref was passed (hash or array, could be both?      
-      $c = $arg;
+   # 1.a) if a ref, assume a conf ref was passed (hash or array, could be both?)
+   if ( ref $arg ){
+      $conf = $arg;
+   }   
+   # 1.b) otherwise assume the argument is a path string to a yaml file
+   else {
+      $conf = YAML::LoadFile($arg) 
+         or croak("yaml_dbh(), cant YAML LoadFile: '$arg'"); 
    }
 
-   else { # assume path
-      $c = YAML::LoadFile($arg) or die("cant YAML load $arg");      
+
+
+
+   # 2) SCAN THE CONF HASHREF FOR REQ CONNECT DATA   
+   # 2.a) try mysql
+   if( ! (($dbsource, $username, $password) = _findkeys_mysql($conf)) ){
+
+      # 2.b) try sqlite
+      ( $dbsource, $username, $password ) = _findkeys_sqlite($conf)
+
+         # 2.c) or croak
+         or croak("yaml_dbh() Cannot find proper params in arg '$arg' to connect via sqlite or mysql, errs: ".join(', ',@errstr));
    }
 
 
-     
-   # 2) scan conf ref for arguments
 
-   my $username = _findkey( $c => qw(username uname user dbuser dbusername) )
-      or die("missing username in $arg");
-      
-   my $hostname = _findkey( $c => qw(hostname host dbhost dbhostname) ) || 'localhost';
-
-   my $password = _findkey( $c => qw(password dbpass dbpassword passw dbpassw pass))
-      or die("missing password in $arg");
-   
-   my $database = _findkey( $c => qw(database dbname databasename))
-      or die("missing database name in $arg");
-   my $dbdriver = _findkey( $c => qw(dbdriver driver db_driver) ) || 'mysql';
-
-
-   my $dbsource = "DBI:$dbdriver:database=$database;host=$hostname";
-   
-   ### $database
-   ### $hostname
-   ### $username
-   ### $password
-   ### $dbdriver
-   ### $dbsource
-
-
-   # 3) open handle
-
+   # 3) OPEN DB HANDLE
    my $dbh = DBI->connect(
       $dbsource, 
       $username, 
@@ -68,6 +69,51 @@ sub yaml_dbh {
 }
 
 
+sub _findkeys_mysql {
+   my $conf = shift;
+
+
+   my $username = _findkey( $conf => qw(username uname user dbuser dbusername) )
+      or push @errstr, "missing username";
+      
+   my $hostname = _findkey( $conf => qw(hostname host dbhost dbhostname) ) || 'localhost';
+
+   my $password = _findkey( $conf => qw(password dbpass dbpassword passw dbpassw pass))
+      or push @errstr, "missing password";
+   
+   my $database = _findkey( $conf => qw(database dbname databasename))
+      or push @errstr, "missing database name";
+
+   my $dbdriver = _findkey( $conf => qw(dbdriver driver db_driver) ) || 'mysql';
+
+   @errstr and scalar @errstr and return;
+
+   ### $database
+   ### $hostname
+   ### $username
+   ### $password
+   ### $dbdriver
+
+   my $dbsource =  "DBI:$dbdriver:database=$database;host=$hostname";
+   ### $dbsource
+
+   return( $dbsource, $username, $password);
+}
+
+sub _findkeys_sqlite {
+   my $conf = shift;
+
+   my $abs_sqlite = _findkey( $conf => qw(abs_db abs_sqlite) )
+      or push @errstr, "missing abs_sqlite"
+      and return;
+
+   my $dbdriver = _findkey( $conf => qw(dbdriver driver db_driver) ) || 'SQLite';
+
+   my $dbsource = "dbi:$dbdriver:dbname=$abs_sqlite";
+   ### $dbsource
+
+   return ($dbsource,'','');
+}
 
 
 
@@ -109,20 +155,32 @@ YAML::DBH
 
 =head2 EXAMPLE 2
 
-   use YAML::DBH;
-
    my $conf = YAML::LoadFile('./file.conf');
 
    my $dbh  = YAML::DBH::yml_dbh($conf);
+   
+=head2 EXAMPLE 3
 
+   my $dbh  = YAML::DBH::yml_dbh({ 
+      username => 'james', password => 'awefafw', database => 'oof',
+      });
+
+=head2 EXAMPLE 4
+
+   my $dbh  = YAML::DBH::yml_dbh({
+      abs_db => './t/sqlite.db',
+   });
 
 =head1 DESCRIPTION
 
-Point and shoot method of getting a mysql database handle with only a yaml 
-configuration file as argument.
+Point and shoot method of getting a database handle with only a yaml 
+configuration file as argument. 
 
 This is meant for people learning perl who just want to get up and running.
 It's the simplest customizable way of getting a database handle with very little code.
+
+This is mostly for mysql- the default driver used. The conf file may also tell to 
+use a sqlite db instead.
 
 =head1 SUBS
 
@@ -131,7 +189,7 @@ Are not exported by default.
 =head2 yaml_dbh()
 
 Argument is abs path to yaml config file.
-Returns DBI mysql dbh handle.
+Returns database handle, this is a DBI connect object.
 
 Optionally you may pass it a conf hashref as returned by YAML::LoadFile instead, to 
 scan it for the parameters to open a mysql connect with, and return a database handle.
@@ -177,6 +235,16 @@ Also acceptable:
    password: aweg3hmva
    database: akira
 
+Also acceptable to open a sqlite db:
+
+   ---
+   abs_sqlite: /path/to/sqlite.db
+
+Or:
+
+   --
+   abs_db: /path/to/sqlite.db
+
 =head1 CAVEATS
 
 Tests will fail unless you have mysqld running, see README.
@@ -186,6 +254,7 @@ Tests will fail unless you have mysqld running, see README.
 L<YAML>
 L<DBI>
 L<DBD::mysql>
+L<DBD::SQLite>
 
 =head1 AUTHOR
 

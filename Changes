@@ -1,3 +1,14 @@
+2008-12-01 16:58  cvs
+
+	* lib/YAML/DBH.pm, t/03-sqlite.t: added ability to open sqlite db
+	  instead of mysql, this makes it easier to roll out tests etc..
+	  using a sqlite db for the super lazy/convenient
+
+2008-09-09 14:58  cvs
+
+	* Makefile.PL, lib/YAML/DBH.pm: took out use of Smart::Comments for
+	  dist
+
 2008-09-09 14:53  cvs
 
 	* Makefile.PL, README, lib/YAML/DBH.pm, t/02_open_from_confhash.pl,

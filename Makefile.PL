@@ -5,13 +5,16 @@ WriteMakefile(
    VERSION_FROM => 'lib/YAML/DBH.pm',
 
 
-   # gen /usr/bin/pmused by Tue Sep  9 15:57:37 EDT 2008 
+   # gen /usr/bin/pmused by Mon Dec  1 17:04:41 EST 2008 
    PREREQ_PM => {
-      'DBD::mysql'                        => '3.0002',
+      'Carp'                              => '1',
+      'Cwd'                               => '3',
+      'DBD::SQLite'                       => '1.14',
+      'DBD::mysql'                        => '4.008',
       'DBI'                               => '1.607',
-      'Exporter'                          => '5.58',
-      'Test::Simple'                      => '0.8',
-      'YAML'                              => '0.62',
+      'Exporter'                          => '5',
+      'Test::Simple'                      => '0',
+      'YAML'                              => '0.66',
    },
 
 
