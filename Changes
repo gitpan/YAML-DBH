@@ -1,3 +1,8 @@
+2009-08-27 15:10  cvs
+
+	* Makefile.PL, lib/YAML/DBH.pm: Cleaned up documentation. Also made
+	  sure licence = perl, shows up.  Improved README file.
+
 2008-12-01 16:58  cvs
 
 	* lib/YAML/DBH.pm, t/03-sqlite.t: added ability to open sqlite db

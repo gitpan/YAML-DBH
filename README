@@ -1,4 +1,16 @@
 YAML::DBH
+=========
+
+Point and shoot method of getting a database handle with only a yaml 
+configuration file as argument. 
+
+This is meant for people learning perl who just want to get up and running.
+It's the simplest customizable way of getting a database handle with very little code.
+
+This is mostly for mysql- the default driver used. The conf file may also tell to 
+use a sqlite db instead.
+
+
 
 INSTALLATION
 

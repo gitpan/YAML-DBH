@@ -9,7 +9,7 @@ use vars qw(@EXPORT_OK %EXPORT_TAGS @ISA $VERSION @errstr);
 @ISA = qw/Exporter/;
 @EXPORT_OK = qw(yaml_dbh);
 %EXPORT_TAGS = ( all => \@EXPORT_OK );
-$VERSION = sprintf "%d.%02d", q$Revision: 1.7 $ =~ /(\d+)/g;
+$VERSION = sprintf "%d.%02d", q$Revision: 1.8 $ =~ /(\d+)/g;
 
 
 
@@ -86,7 +86,7 @@ sub _findkeys_mysql {
 
    my $dbdriver = _findkey( $conf => qw(dbdriver driver db_driver) ) || 'mysql';
 
-   @errstr and scalar @errstr and return;
+   (@errstr and scalar @errstr) and (warn("Errors: @errstr") and return);
 
    ### $database
    ### $hostname
@@ -104,8 +104,7 @@ sub _findkeys_sqlite {
    my $conf = shift;
 
    my $abs_sqlite = _findkey( $conf => qw(abs_db abs_sqlite) )
-      or push @errstr, "missing abs_sqlite"
-      and return;
+      or ((push @errstr, "missing abs_sqlite") and return);
 
    my $dbdriver = _findkey( $conf => qw(dbdriver driver db_driver) ) || 'SQLite';
 
@@ -144,19 +143,19 @@ __END__
 
 =head1 NAME
 
-YAML::DBH
+YAML::DBH - instant database connection from config file on disk
 
 =head1 SYNOPSIS
 
    use YAML::DBH 'yaml_dbh';
-
+   
    my $dbh = yaml_dbh( '/home/myself/mysql_credentials.conf' );
 
 
 =head2 EXAMPLE 2
 
    my $conf = YAML::LoadFile('./file.conf');
-
+   
    my $dbh  = YAML::DBH::yml_dbh($conf);
    
 =head2 EXAMPLE 3
@@ -260,6 +259,20 @@ L<DBD::SQLite>
 
 Leo Charre leocharre at cpan dot org
 
+=head1 COPYRIGHT
+
+Copyright (c) 2009 Leo Charre. All rights reserved.
+
+=head1 LICENSE
+
+This package is free software; you can redistribute it and/or modify it under the same terms as Perl itself, i.e., under the terms of the "Artistic License" or the "GNU General Public License".
+
+=head1 DISCLAIMER
+
+This package is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+See the "GNU General Public License" for more details.
+   
 =cut
 
 
